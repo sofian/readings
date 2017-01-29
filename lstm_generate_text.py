@@ -15,7 +15,7 @@ parser.add_argument("text_file", type=str, help="The file containing the origina
 parser.add_argument("model_file", type=str, help="The file containing the trained model")
 parser.add_argument("-n", "--n-hidden", type=int, default=256, help="Number of hidden units")
 parser.add_argument("-s", "--sequence-length", type=int, default=100, help="Sequence length")
-parser.add_argument("-S", "--sampling_mode", type=str, default="argmax", choices=["argmax", "random"], help="Sampling policy")
+parser.add_argument("-S", "--sampling_mode", type=str, default="argmax", choices=["argmax", "random", "special"], help="Sampling policy")
 parser.add_argument("-N", "--n-words", type=int, default=1000, help="Number of words to generate")
 
 args = parser.parse_args()
@@ -75,10 +75,22 @@ for i in range(args.n_words):
 	x = numpy.reshape(pattern, (1, len(pattern), 1))
 	x = x / float(n_vocab)
 	prediction = model.predict(x, verbose=0)
-	index = numpy.argmax(prediction)
+	if (args.sampling_mode is "argmax"):
+		index = numpy.argmax(prediction)
+	elif (args.sampling_mode is "random"):
+		index = numpy.asscalar(numpy.random.choice(numpy.array(max_indices), 1, p=predicition.squeeze()))
+	else:
+	  prediction = numpy.asarray(prediction.squeeze())
+	  max_indices = prediction.argsort()[-3:][::-1]
+	  max_indices_weights = [ prediction[m] for m in max_indices ]
+	  max_indices_sum = numpy.sum(max_indices_weights)
+	  max_indices_weights = [ prediction[m]/max_indices_sum for m in max_indices ]
+	  index = numpy.asscalar(numpy.random.choice(numpy.array(max_indices), 1, p=numpy.array(max_indices_weights)))
+
 	result = int_to_char[index]
 	seq_in = [int_to_char[value] for value in pattern]
 	sys.stdout.write(result)
 	pattern.append(index)
 	pattern = pattern[1:len(pattern)]
+
 print "\nDone."
