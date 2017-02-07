@@ -8,6 +8,8 @@ from keras.layers import LSTM
 from keras.callbacks import ModelCheckpoint
 from keras.utils import np_utils
 
+import time
+
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -71,10 +73,13 @@ filepath="weights-improvement-{epoch:02d}-{loss:.4f}.hdf5"
 checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
 callbacks_list = [checkpoint]
 
+absolute_time = time.time()
+cpu_time = time.clock()
 model.fit(X, y, nb_epoch=args.n_epochs, batch_size=128, callbacks=callbacks_list, initial_epoch=args.initial_epoch)
+absolute_time = time.time()  - absolute_time
+cpu_time      = time.clock() - cpu_time
+n_epochs = args.n_epochs - args.initial_epoch
 
-model.fit(X, y, nb_epoch=20, batch_size=128, callbacks=callbacks_list, initial_epoch=args.initial_epoch)
-
-
-
+print "Total time: {time:.2f} {cputime:.2f}".format(time=absolute_time, cputime=cpu_time)
+print "Per epoch:  {time:.2f} {cputime:.2f}".format(time=absolute_time/n_epochs, cputime=cpu_time/n_epochs)
 
