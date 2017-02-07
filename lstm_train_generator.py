@@ -16,6 +16,7 @@ parser.add_argument("-n", "--n-hidden", type=int, default=256, help="Number of h
 parser.add_argument("-s", "--sequence-length", type=int, default=100, help="Sequence length")
 parser.add_argument("-m", "--model-file", type=str, default="", help="Model file to load (in order to restart from a certain point)")
 parser.add_argument("-i", "--initial-epoch", type=int, default=0, help="Epoch at which to start training (useful for resuming previous training)")
+parser.add_argument("-e", "--n-epochs", type=int, default=20, help="Number of epochs to train (total)")
 
 args = parser.parse_args()
 
@@ -70,6 +71,7 @@ filepath="weights-improvement-{epoch:02d}-{loss:.4f}.hdf5"
 checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
 callbacks_list = [checkpoint]
 
+model.fit(X, y, nb_epoch=args.n_epochs, batch_size=128, callbacks=callbacks_list, initial_epoch=args.initial_epoch)
 
 model.fit(X, y, nb_epoch=20, batch_size=128, callbacks=callbacks_list, initial_epoch=args.initial_epoch)
 
