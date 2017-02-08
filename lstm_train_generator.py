@@ -1,15 +1,5 @@
 # Source: http://machinelearningmastery.com/text-generation-lstm-recurrent-neural-networks-python-keras/
 
-import numpy
-from keras.models import Sequential
-from keras.layers import Dense
-from keras.layers import Dropout
-from keras.layers import LSTM
-from keras.callbacks import ModelCheckpoint
-from keras.utils import np_utils
-
-import time
-
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -21,6 +11,16 @@ parser.add_argument("-i", "--initial-epoch", type=int, default=0, help="Epoch at
 parser.add_argument("-e", "--n-epochs", type=int, default=20, help="Number of epochs to train (total)")
 
 args = parser.parse_args()
+
+import numpy
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.layers import Dropout
+from keras.layers import LSTM
+from keras.callbacks import ModelCheckpoint
+from keras.utils import np_utils
+
+import time
 
 # load ascii text and covert to lowercase
 raw_text = open(args.text_file).read()

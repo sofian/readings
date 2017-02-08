@@ -1,13 +1,4 @@
 # Load LSTM network and generate text
-import sys
-import numpy
-from keras.models import Sequential
-from keras.layers import Dense
-from keras.layers import Dropout
-from keras.layers import LSTM
-from keras.callbacks import ModelCheckpoint
-from keras.utils import np_utils
-
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -19,6 +10,15 @@ parser.add_argument("-S", "--sampling_mode", type=str, default="argmax", choices
 parser.add_argument("-N", "--n-words", type=int, default=1000, help="Number of words to generate")
 
 args = parser.parse_args()
+
+import sys
+import numpy
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.layers import Dropout
+from keras.layers import LSTM
+from keras.callbacks import ModelCheckpoint
+from keras.utils import np_utils
 
 # load ascii text and covert to lowercase
 raw_text = open(args.text_file).read()
