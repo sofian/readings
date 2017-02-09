@@ -78,6 +78,7 @@ filepath="lstm-weights-layers{n_layers}-nhu{n_hidden}-{{epoch:02d}}.hdf5".format
 checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
 callbacks_list = [checkpoint]
 
+# train
 absolute_time = time.time()
 cpu_time = time.clock()
 model.fit(X, y, nb_epoch=args.n_epochs, batch_size=128, callbacks=callbacks_list, initial_epoch=args.initial_epoch)
