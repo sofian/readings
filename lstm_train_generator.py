@@ -73,9 +73,8 @@ if (args.model_file):
 
 model.compile(loss='categorical_crossentropy', optimizer='adam')
 
-
 # define the checkpoint
-filepath="weights-improvement-{epoch:02d}-{loss:.4f}.hdf5"
+filepath="lstm-weights-layers{n_layers}-nhu{n_hidden}-{{epoch:02d}}.hdf5".format(n_hidden=args.n_hidden, n_layers=args.n_layers)
 checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
 callbacks_list = [checkpoint]
 
