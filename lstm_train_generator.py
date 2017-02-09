@@ -61,6 +61,8 @@ model.add(LSTM(args.n_hidden, input_shape=(X.shape[1], X.shape[2])))
 model.add(Dropout(0.2))
 model.add(Dense(y.shape[1], activation='softmax'))
 
+print model.summary()
+
 if (args.model_file):
   print "Loading weights from: " + args.model_file
   model.load_weights(args.model_file)
