@@ -5,7 +5,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("text_file", type=str, help="The file containing the original text")
 parser.add_argument("model_files_prefix", type=str, help="The file containing the prefix to the model files")
 parser.add_argument("output_file", type=str, help="The output file")
-parser.add_argument("-n", "--n-hidden", type=int, default=256, help="Number of hidden units")
+parser.add_argument("-n", "--n-hidden", type=int, default=256, help="Number of hidden units per layer")
+parser.add_argument("-l", "--n-layers", type=int, default=1, help="Number of layers")
 parser.add_argument("-e", "--n-epochs", type=int, default=20, help="Number of epochs")
 parser.add_argument("-s", "--sequence-length", type=int, default=100, help="Sequence length")
 parser.add_argument("-S", "--sampling_mode", type=str, default="argmax", choices=["argmax", "random", "special"], help="Sampling policy")
@@ -62,9 +63,14 @@ y = np_utils.to_categorical(dataY)
 
 # define the LSTM model
 model = Sequential()
-model.add(LSTM(args.n_hidden, input_shape=(X.shape[1], X.shape[2])))
+model.add(LSTM(args.n_hidden, input_shape=(X.shape[1], X.shape[2]), return_sequences=(args.n_layers > 1)))
 model.add(Dropout(0.2))
+for l in range(1, args.n_layers):
+  model.add(LSTM(args.n_hidden, return_sequences=(l < args.n_layers-1)))
+  model.add(Dropout(0.2))
 model.add(Dense(y.shape[1], activation='softmax'))
+
+print model.summary()
 
 # pick beginning of text as seed
 pattern = dataX[0]
@@ -79,7 +85,7 @@ for e in range(args.n_epochs):
   model_file = "{prefix}{epoch:02d}.hdf5".format(prefix=args.model_files_prefix, epoch=e)
   model.load_weights(model_file)
   model.compile(loss='categorical_crossentropy', optimizer='adam')
-  
+
   output_file.write("\n\nEPOCH {epoch}\n\n".format(epoch=e))
 
   # generate characters

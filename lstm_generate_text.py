@@ -4,7 +4,8 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("text_file", type=str, help="The file containing the original text")
 parser.add_argument("model_file", type=str, help="The file containing the trained model")
-parser.add_argument("-n", "--n-hidden", type=int, default=256, help="Number of hidden units")
+parser.add_argument("-n", "--n-hidden", type=int, default=256, help="Number of hidden units per layer")
+parser.add_argument("-l", "--n-layers", type=int, default=1, help="Number of layers")
 parser.add_argument("-s", "--sequence-length", type=int, default=100, help="Sequence length")
 parser.add_argument("-S", "--sampling_mode", type=str, default="argmax", choices=["argmax", "random", "special"], help="Sampling policy")
 parser.add_argument("-N", "--n-words", type=int, default=1000, help="Number of words to generate")
@@ -56,9 +57,14 @@ y = np_utils.to_categorical(dataY)
 
 # define the LSTM model
 model = Sequential()
-model.add(LSTM(args.n_hidden, input_shape=(X.shape[1], X.shape[2])))
+model.add(LSTM(args.n_hidden, input_shape=(X.shape[1], X.shape[2]), return_sequences=(args.n_layers > 1)))
 model.add(Dropout(0.2))
+for l in range(1, args.n_layers):
+  model.add(LSTM(args.n_hidden, return_sequences=(l < args.n_layers-1)))
+  model.add(Dropout(0.2))
 model.add(Dense(y.shape[1], activation='softmax'))
+
+print model.summary()
 
 # load the network weights
 model.load_weights(args.model_file)
