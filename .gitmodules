@@ -1,0 +1,3 @@
+[submodule "deep-learning-sandbox"]
+	path = deep-learning-sandbox
+	url = git@github.com:sofian/deep-learning-sandbox
