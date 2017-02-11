@@ -7,9 +7,9 @@ parser.add_argument("model_file", type=str, help="The file containing the traine
 parser.add_argument("-n", "--n-hidden", type=int, default=256, help="Number of hidden units per layer")
 parser.add_argument("-l", "--n-layers", type=int, default=1, help="Number of layers")
 parser.add_argument("-s", "--sequence-length", type=int, default=100, help="Sequence length")
-parser.add_argument("-S", "--sampling_mode", type=str, default="argmax", choices=["argmax", "softmax", "special"], help="Sampling policy")
+parser.add_argument("-S", "--sampling-mode", type=str, default="argmax", choices=["argmax", "softmax", "special"], help="Sampling policy")
 parser.add_argument("-N", "--n-words", type=int, default=1000, help="Number of words to generate")
-parser.add_argument("-T", "--temperature", type=int, default=1, help="Temperature argument [0, +inf] (for softmax sampling) (higher: more uniform, lower: more greedy")
+parser.add_argument("-T", "--temperature", type=float, default=1, help="Temperature argument [0, +inf] (for softmax sampling) (higher: more uniform, lower: more greedy")
 
 args = parser.parse_args()
 
@@ -87,15 +87,23 @@ for i in range(args.n_words):
 	prediction = model.predict(x, verbose=0)
 
 	# argmax
-	if (args.sampling_mode is "argmax"):
-		index = numpy.argmax(prediction)
+	if (args.sampling_mode == "argmax"):
+		index = numpy.argmax(prediction.squeeze())
 
 	# random
 	else:
-		prediction = softmax_adjust(prediction.squeeze(), temperature)
+		# Source: https://gist.github.com/alceufc/f3fd0cd7d9efb120195c
+		prediction = prediction.squeeze()
+		if (temperature != 1):
+			prediction = numpy.power(prediction, 1./temperature)
+			prediction /= prediction.sum(0)
 
-		if (args.sampling_mode is "softmax"):
-			index = numpy.asscalar(numpy.random.choice(n_vocab, 1, p=prediction))
+		#print "[" + args.sampling_mode +"]"
+		#print (args.sampling_mode == "softmax")
+
+		if (args.sampling_mode == "softmax"):
+			#print "using softmax"
+			index = numpy.asscalar(numpy.random.choice(numpy.arange(n_vocab), 1, p=prediction))
 
 		# special
 		else:
@@ -113,8 +121,4 @@ for i in range(args.n_words):
 	pattern = pattern[1:len(pattern)]
 
 print "\nDone."
-
-# Source: https://gist.github.com/alceufc/f3fd0cd7d9efb120195c
-def softmax_adjust(x, temperature):
-	scoreMatExp = numpy.power(numpy.asarray(x), -temperature)
-	return scoreMatExp / scoreMatExp.sum(0)
+1
