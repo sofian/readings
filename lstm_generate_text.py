@@ -60,8 +60,8 @@ model = Sequential()
 model.add(LSTM(args.n_hidden, input_shape=(X.shape[1], X.shape[2]), return_sequences=(args.n_layers > 1)))
 model.add(Dropout(0.2))
 for l in range(1, args.n_layers):
-  model.add(LSTM(args.n_hidden, return_sequences=(l < args.n_layers-1)))
-  model.add(Dropout(0.2))
+	model.add(LSTM(args.n_hidden, return_sequences=(l < args.n_layers-1)))
+	model.add(Dropout(0.2))
 model.add(Dense(y.shape[1], activation='softmax'))
 
 print model.summary()
