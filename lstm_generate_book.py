@@ -79,6 +79,8 @@ pattern = dataX[0]
 print "Seed:"
 print "\"", ''.join([int_to_char[value] for value in pattern]), "\""
 
+temperature = args.temperature
+
 # Run through all epochs, outputing text
 for e in range(args.n_epochs):
 	print "Generating epoch # {epoch}".format(epoch=e)
