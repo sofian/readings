@@ -11,6 +11,7 @@ parser.add_argument("-e", "--n-epochs", type=int, default=20, help="Number of ep
 parser.add_argument("-s", "--sequence-length", type=int, default=100, help="Sequence length")
 parser.add_argument("-S", "--sampling_mode", type=str, default="argmax", choices=["argmax", "softmax", "special"], help="Sampling policy")
 parser.add_argument("-N", "--n-words", type=int, default=1000, help="Number of words to generate per epoch/chapter")
+parser.add_argument("-T", "--temperature", type=float, default=1, help="Temperature argument [0, +inf] (for softmax sampling) (higher: more uniform, lower: more greedy")
 
 args = parser.parse_args()
 
