@@ -9,7 +9,7 @@ parser.add_argument("-n", "--n-hidden", type=int, default=256, help="Number of h
 parser.add_argument("-l", "--n-layers", type=int, default=1, help="Number of layers")
 parser.add_argument("-e", "--n-epochs", type=int, default=20, help="Number of epochs")
 parser.add_argument("-s", "--sequence-length", type=int, default=100, help="Sequence length")
-parser.add_argument("-S", "--sampling_mode", type=str, default="argmax", choices=["argmax", "random", "special"], help="Sampling policy")
+parser.add_argument("-S", "--sampling_mode", type=str, default="argmax", choices=["argmax", "softmax", "special"], help="Sampling policy")
 parser.add_argument("-N", "--n-words", type=int, default=1000, help="Number of words to generate per epoch/chapter")
 
 args = parser.parse_args()
@@ -66,8 +66,8 @@ model = Sequential()
 model.add(LSTM(args.n_hidden, input_shape=(X.shape[1], X.shape[2]), return_sequences=(args.n_layers > 1)))
 model.add(Dropout(0.2))
 for l in range(1, args.n_layers):
-  model.add(LSTM(args.n_hidden, return_sequences=(l < args.n_layers-1)))
-  model.add(Dropout(0.2))
+	model.add(LSTM(args.n_hidden, return_sequences=(l < args.n_layers-1)))
+	model.add(Dropout(0.2))
 model.add(Dense(y.shape[1], activation='softmax'))
 
 print model.summary()
@@ -80,35 +80,51 @@ print "\"", ''.join([int_to_char[value] for value in pattern]), "\""
 
 # Run through all epochs, outputing text
 for e in range(args.n_epochs):
-  print "Generating epoch # {epoch}".format(epoch=e)
-  # load the network weights
-  model_file = "{prefix}{epoch:02d}.hdf5".format(prefix=args.model_files_prefix, epoch=e)
-  model.load_weights(model_file)
-  model.compile(loss='categorical_crossentropy', optimizer='adam')
+	print "Generating epoch # {epoch}".format(epoch=e)
+	# load the network weights
+	model_file = "{prefix}{epoch:02d}.hdf5".format(prefix=args.model_files_prefix, epoch=e)
+	model.load_weights(model_file)
+	model.compile(loss='categorical_crossentropy', optimizer='adam')
+	#output_file.write("\n\nEPOCH {epoch}\n\n".format(epoch=e))
 
-  output_file.write("\n\nEPOCH {epoch}\n\n".format(epoch=e))
+	# generate characters
+	for i in range(args.n_words):
+		x = numpy.reshape(pattern, (1, len(pattern), 1))
+		x = x / float(n_vocab)
+		prediction = model.predict(x, verbose=0)
 
-  # generate characters
-  for i in range(args.n_words):
-	  x = numpy.reshape(pattern, (1, len(pattern), 1))
-	  x = x / float(n_vocab)
-	  prediction = model.predict(x, verbose=0)
-	  if (args.sampling_mode is "argmax"):
-		  index = numpy.argmax(prediction)
-	  elif (args.sampling_mode is "random"):
-		  index = numpy.asscalar(numpy.random.choice(numpy.array(max_indices), 1, p=predicition.squeeze()))
-	  else:
-	    prediction = numpy.asarray(prediction.squeeze())
-	    max_indices = prediction.argsort()[-3:][::-1]
-	    max_indices_weights = [ prediction[m] for m in max_indices ]
-	    max_indices_sum = numpy.sum(max_indices_weights)
-	    max_indices_weights = [ prediction[m]/max_indices_sum for m in max_indices ]
-	    index = numpy.asscalar(numpy.random.choice(numpy.array(max_indices), 1, p=numpy.array(max_indices_weights)))
+		# argmax
+		if (args.sampling_mode == "argmax"):
+			index = numpy.argmax(prediction.squeeze())
 
-	  result = int_to_char[index]
-	  seq_in = [int_to_char[value] for value in pattern]
-	  output_file.write(result)
-	  pattern.append(index)
-	  pattern = pattern[1:len(pattern)]
+		# random
+		else:
+			# Source: https://gist.github.com/alceufc/f3fd0cd7d9efb120195c
+			prediction = prediction.squeeze()
+			if (temperature != 1):
+				prediction = numpy.power(prediction, 1./temperature)
+				prediction /= prediction.sum(0)
 
-  output_file.flush()
+			#print "[" + args.sampling_mode +"]"
+			#print (args.sampling_mode == "softmax")
+
+			if (args.sampling_mode == "softmax"):
+				#print "using softmax"
+				index = numpy.asscalar(numpy.random.choice(numpy.arange(n_vocab), 1, p=prediction))
+
+			# special
+			else:
+				prediction = numpy.asarray(prediction)
+				max_indices = prediction.argsort()[-3:][::-1]
+				max_indices_weights = [ prediction[m] for m in max_indices ]
+				max_indices_sum = numpy.sum(max_indices_weights)
+				max_indices_weights = [ prediction[m]/max_indices_sum for m in max_indices ]
+				index = numpy.asscalar(numpy.random.choice(numpy.array(max_indices), 1, p=numpy.array(max_indices_weights)))
+
+		result = int_to_char[index]
+		seq_in = [int_to_char[value] for value in pattern]
+		output_file.write(result)
+		pattern.append(index)
+		pattern = pattern[1:len(pattern)]
+
+	output_file.flush()
