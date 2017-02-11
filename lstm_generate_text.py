@@ -7,8 +7,9 @@ parser.add_argument("model_file", type=str, help="The file containing the traine
 parser.add_argument("-n", "--n-hidden", type=int, default=256, help="Number of hidden units per layer")
 parser.add_argument("-l", "--n-layers", type=int, default=1, help="Number of layers")
 parser.add_argument("-s", "--sequence-length", type=int, default=100, help="Sequence length")
-parser.add_argument("-S", "--sampling_mode", type=str, default="argmax", choices=["argmax", "random", "special"], help="Sampling policy")
+parser.add_argument("-S", "--sampling_mode", type=str, default="argmax", choices=["argmax", "softmax", "special"], help="Sampling policy")
 parser.add_argument("-N", "--n-words", type=int, default=1000, help="Number of words to generate")
+parser.add_argument("-T", "--temperature", type=int, default=1, help="Temperature argument [0, +inf] (for softmax sampling) (higher: more uniform, lower: more greedy")
 
 args = parser.parse_args()
 
@@ -76,22 +77,34 @@ pattern = dataX[start]
 
 print "Seed:"
 print "\"", ''.join([int_to_char[value] for value in pattern]), "\""
+
+temperature = args.temperature
+
 # generate characters
 for i in range(args.n_words):
 	x = numpy.reshape(pattern, (1, len(pattern), 1))
 	x = x / float(n_vocab)
 	prediction = model.predict(x, verbose=0)
+
+	# argmax
 	if (args.sampling_mode is "argmax"):
 		index = numpy.argmax(prediction)
-	elif (args.sampling_mode is "random"):
-		index = numpy.asscalar(numpy.random.choice(numpy.array(max_indices), 1, p=predicition.squeeze()))
+
+	# random
 	else:
-	  prediction = numpy.asarray(prediction.squeeze())
-	  max_indices = prediction.argsort()[-3:][::-1]
-	  max_indices_weights = [ prediction[m] for m in max_indices ]
-	  max_indices_sum = numpy.sum(max_indices_weights)
-	  max_indices_weights = [ prediction[m]/max_indices_sum for m in max_indices ]
-	  index = numpy.asscalar(numpy.random.choice(numpy.array(max_indices), 1, p=numpy.array(max_indices_weights)))
+		prediction = softmax_adjust(prediction.squeeze(), temperature)
+
+		if (args.sampling_mode is "softmax"):
+			index = numpy.asscalar(numpy.random.choice(n_vocab, 1, p=prediction))
+
+		# special
+		else:
+			prediction = numpy.asarray(prediction)
+			max_indices = prediction.argsort()[-3:][::-1]
+			max_indices_weights = [ prediction[m] for m in max_indices ]
+			max_indices_sum = numpy.sum(max_indices_weights)
+			max_indices_weights = [ prediction[m]/max_indices_sum for m in max_indices ]
+			index = numpy.asscalar(numpy.random.choice(numpy.array(max_indices), 1, p=numpy.array(max_indices_weights)))
 
 	result = int_to_char[index]
 	seq_in = [int_to_char[value] for value in pattern]
@@ -100,3 +113,8 @@ for i in range(args.n_words):
 	pattern = pattern[1:len(pattern)]
 
 print "\nDone."
+
+# Source: https://gist.github.com/alceufc/f3fd0cd7d9efb120195c
+def softmax_adjust(x, temperature):
+	scoreMatExp = numpy.power(numpy.asarray(x), -temperature)
+	return scoreMatExp / scoreMatExp.sum(0)
