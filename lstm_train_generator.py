@@ -77,6 +77,7 @@ model.optimizer.lr.set_value(args.learning_rate) # Change learning rate
 
 # define the checkpoint
 filepath="lstm-weights-layers{n_layers}-nhu{n_hidden}-{{epoch:02d}}.hdf5".format(n_hidden=args.n_hidden, n_layers=args.n_layers)
+model.save_weights(filepath.format(epoch=-1)) # save startup weights
 checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
 callbacks_list = [checkpoint]
 
@@ -90,4 +91,3 @@ n_epochs = args.n_epochs - args.initial_epoch
 
 print "Total time: {time:.2f} {cputime:.2f}".format(time=absolute_time, cputime=cpu_time)
 print "Per epoch:  {time:.2f} {cputime:.2f}".format(time=absolute_time/n_epochs, cputime=cpu_time/n_epochs)
-
