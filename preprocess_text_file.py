@@ -16,6 +16,7 @@ raw_text = open(args.text_file).read()
 raw_text = raw_text.replace("*", "")
 
 # Replace line breaks with spaces and 2+line breaks with newlines.
+raw_text = re.sub(r'\r\n', '\n', raw_text)
 raw_text = re.sub(r' *\n', '\n', raw_text)
 raw_text = re.sub(r'\n\n+', '\r', raw_text)
 raw_text = raw_text.replace("\n", " ")
