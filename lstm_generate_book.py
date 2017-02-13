@@ -73,8 +73,8 @@ model.add(Dense(y.shape[1], activation='softmax'))
 
 print model.summary()
 
-# pick beginning of text as seed
-pattern = dataX[0]
+# pick end of text as seed
+pattern = dataX[-1]
 
 print "Seed:"
 print "\"", ''.join([int_to_char[value] for value in pattern]), "\""
