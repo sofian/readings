@@ -12,6 +12,7 @@ parser.add_argument("-s", "--sequence-length", type=int, default=100, help="Sequ
 parser.add_argument("-S", "--sampling_mode", type=str, default="argmax", choices=["argmax", "softmax", "special"], help="Sampling policy")
 parser.add_argument("-N", "--n-words", type=int, default=1000, help="Number of words to generate per epoch/chapter")
 parser.add_argument("-T", "--temperature", type=float, default=1, help="Temperature argument [0, +inf] (for softmax sampling) (higher: more uniform, lower: more greedy")
+parser.add_argument("-E", "--temperature-end", type=float, default=-1, help="Temperature end value (if <= 0 : don't change)")
 
 args = parser.parse_args()
 
@@ -83,7 +84,11 @@ temperature = args.temperature
 
 # Run through all epochs, outputing text
 for e in range(args.n_epochs):
-	print "Generating epoch # {epoch}".format(epoch=e)
+	if (args.temperature_end > 0):
+		# linear interpolation
+		temperature = args.temperature + (float(e)/(args.n_epochs-1)) * (args.temperature_end - args.temperature)
+
+	print "Generating epoch # {epoch} (temperature={temp})".format(epoch=e,temp=temperature)
 	# load the network weights
 	model_file = "{prefix}{epoch:02d}.hdf5".format(prefix=args.model_files_prefix, epoch=e)
 	model.load_weights(model_file)
