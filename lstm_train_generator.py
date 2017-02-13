@@ -10,6 +10,7 @@ parser.add_argument("-s", "--sequence-length", type=int, default=100, help="Sequ
 parser.add_argument("-m", "--model-file", type=str, default="", help="Model file to load (in order to restart from a certain point)")
 parser.add_argument("-i", "--initial-epoch", type=int, default=0, help="Epoch at which to start training (useful for resuming previous training)")
 parser.add_argument("-e", "--n-epochs", type=int, default=20, help="Number of epochs to train (total)")
+parser.add_argument("-lr", "--learning-rate", type=float, default=0.001, help="The learning rate")
 
 args = parser.parse_args()
 
@@ -72,6 +73,7 @@ if (args.model_file):
   model.load_weights(args.model_file)
 
 model.compile(loss='categorical_crossentropy', optimizer='adam')
+model.optimizer.lr.set_value(args.learning_rate) # Change learning rate
 
 # define the checkpoint
 filepath="lstm-weights-layers{n_layers}-nhu{n_hidden}-{{epoch:02d}}.hdf5".format(n_hidden=args.n_hidden, n_layers=args.n_layers)
