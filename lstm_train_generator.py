@@ -11,6 +11,7 @@ parser.add_argument("-m", "--model-file", type=str, default="", help="Model file
 parser.add_argument("-i", "--initial-epoch", type=int, default=0, help="Epoch at which to start training (useful for resuming previous training)")
 parser.add_argument("-e", "--n-epochs", type=int, default=20, help="Number of epochs to train (total)")
 parser.add_argument("-lr", "--learning-rate", type=float, default=0.001, help="The learning rate")
+parser.add_argument("-p", "--batch-save-period", type=int, default=10, help="Period at which to save weights (ie. after every X batch)")
 
 args = parser.parse_args()
 
@@ -114,7 +115,8 @@ filepath_batch=filepath_prefix+"b{batch:08d}.hdf5"
 filepath="lstm-weights-layers{n_layers}-nhu{n_hidden}-{{epoch:02d}}.hdf5".format(n_hidden=args.n_hidden, n_layers=args.n_layers)
 if (args.initial_epoch == 0):
   model.save_weights(filepath_epoch.format(epoch=-1)) # save startup weights
-callbacks_list = [ModelSave(filepath_epoch, mode="epoch", save_weights_only=True), ModelSave(filepath_batch, mode="batch", save_weights_only=True, period=10)]
+callbacks_list = [ModelSave(filepath_epoch, mode="epoch", save_weights_only=True), \
+                  ModelSave(filepath_batch, mode="batch", save_weights_only=True, period=args.batch_save_period)]
 
 # train
 absolute_time = time.time()
