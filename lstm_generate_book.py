@@ -3,7 +3,7 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("text_file", type=str, help="The file containing the original text")
-parser.add_argument("model_files_prefix", type=str, help="The file containing the prefix to the model files")
+parser.add_argument("model_file_list", type=str, help="A file containing all the model files to use OR a prefix to use for files")
 parser.add_argument("output_file", type=str, help="The output file")
 parser.add_argument("-n", "--n-hidden", type=int, default=256, help="Number of hidden units per layer")
 parser.add_argument("-l", "--n-layers", type=int, default=1, help="Number of layers")
@@ -18,6 +18,7 @@ args = parser.parse_args()
 
 import sys
 import numpy
+import os.path
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import Dropout
@@ -29,6 +30,17 @@ from keras.utils import np_utils
 # load ascii text and covert to lowercase
 raw_text = open(args.text_file).read()
 raw_text = raw_text.lower()
+
+n_epochs = args.n_epochs
+
+# model files
+if os.path.isfile(args.model_file_list):
+	model_files = [line.rstrip('\n').strip() for line in open(args.model_file_list)]
+	if (n_epochs < len(model_files)):
+		print "Number of epochs {n_epochs} is smaller than number of files in list {n_files}: adjusting.".format(n_epochs=n_epochs, n_files=len(model_files))
+		n_epochs = len(model_files)
+else:
+	model_files = [	"{prefix}{epoch:02d}.hdf5".format(prefix=args.model_file_list, epoch=e) for e in range(n_epochs) ]
 
 # output file
 output_file = open(args.output_file, "w+")
@@ -83,14 +95,14 @@ print "\"", ''.join([int_to_char[value] for value in pattern]), "\""
 temperature = args.temperature
 
 # Run through all epochs, outputing text
-for e in range(args.n_epochs):
+for e in range(n_epochs):
 	if (args.temperature_end > 0):
 		# linear interpolation
 		temperature = args.temperature + (float(e)/(args.n_epochs-1)) * (args.temperature_end - args.temperature)
 
-	print "Generating epoch # {epoch} (temperature={temp})".format(epoch=e,temp=temperature)
+	model_file = model_files[e]
+	print "Generating epoch # {epoch} (temperature={temp}) using file {filename}".format(epoch=e,temp=temperature,filename=model_file)
 	# load the network weights
-	model_file = "{prefix}{epoch:02d}.hdf5".format(prefix=args.model_files_prefix, epoch=e)
 	model.load_weights(model_file)
 	model.compile(loss='categorical_crossentropy', optimizer='adam')
 	#output_file.write("\n\nEPOCH {epoch}\n\n".format(epoch=e))
