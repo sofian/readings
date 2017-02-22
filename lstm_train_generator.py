@@ -12,6 +12,7 @@ parser.add_argument("-i", "--initial-epoch", type=int, default=0, help="Epoch at
 parser.add_argument("-e", "--n-epochs", type=int, default=20, help="Number of epochs to train (total)")
 parser.add_argument("-lr", "--learning-rate", type=float, default=0.001, help="The learning rate")
 parser.add_argument("-p", "--batch-save-period", type=int, default=10, help="Period at which to save weights (ie. after every X batch)")
+parser.add_argument("-b", "--batch-size", type=int, default=128, help="The batch size")
 
 args = parser.parse_args()
 
@@ -121,7 +122,7 @@ callbacks_list = [ModelSave(filepath_epoch, mode="epoch", save_weights_only=True
 # train
 absolute_time = time.time()
 cpu_time = time.clock()
-model.fit(X, y, nb_epoch=args.n_epochs, batch_size=128, callbacks=callbacks_list, initial_epoch=args.initial_epoch)
+model.fit(X, y, nb_epoch=args.n_epochs, batch_size=args.batch_size, callbacks=callbacks_list, initial_epoch=args.initial_epoch)
 absolute_time = time.time()  - absolute_time
 cpu_time      = time.clock() - cpu_time
 n_epochs = args.n_epochs - args.initial_epoch
