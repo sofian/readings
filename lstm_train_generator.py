@@ -19,10 +19,41 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import Dropout
 from keras.layers import LSTM
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import Callback
 from keras.utils import np_utils
 
 import time
+
+class ModelSave(Callback):
+	def __init__(self, filepath, mode="epoch", save_weights_only=False, period=1):
+		super(ModelSave, self).__init__()
+		self.filepath = filepath
+		self.save_weights_only = save_weights_only
+		self.period = period
+		self.steps_since_last_save = 0
+		if (mode == "epoch"):
+			self.process_epoch = True
+		elif (mode == "batch"):
+			self.process_epoch = False
+		else:
+			raise ValueError("Option 'mode' must either be set to 'epoch' or 'batch'.")
+
+	def on_step_end(self, filepath, step, logs={}):
+		self.steps_since_last_save += 1
+		if self.steps_since_last_save >= self.period:
+			self.steps_since_last_save = 0
+			if self.save_weights_only:
+				self.model.save_weights(filepath, overwrite=True)
+			else:
+				self.model.save(filepath, overwrite=True)
+
+	def on_batch_end(self, batch, logs={}):
+		if (not self.process_epoch):
+			self.on_step_end(self.filepath.format(**logs), batch, logs)
+
+	def on_epoch_end(self, epoch, logs={}):
+		if (self.process_epoch):
+			self.on_step_end(self.filepath.format(epoch=epoch, **logs), epoch, logs)
 
 # load ascii text and covert to lowercase
 raw_text = open(args.text_file).read()
@@ -76,10 +107,14 @@ model.compile(loss='categorical_crossentropy', optimizer='adam')
 model.optimizer.lr.set_value(args.learning_rate) # Change learning rate
 
 # define the checkpoint
+filepath_prefix="lstm-weights-layers{n_layers}-nhu{n_hidden}-".format(n_hidden=args.n_hidden, n_layers=args.n_layers)
+filepath_epoch=filepath_prefix+"e{epoch:02d}.hdf5"
+filepath_batch=filepath_prefix+"b{batch:08d}.hdf5"
+
 filepath="lstm-weights-layers{n_layers}-nhu{n_hidden}-{{epoch:02d}}.hdf5".format(n_hidden=args.n_hidden, n_layers=args.n_layers)
-model.save_weights(filepath.format(epoch=-1)) # save startup weights
-checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
-callbacks_list = [checkpoint]
+if (args.initial_epoch == 0):
+  model.save_weights(filepath_epoch.format(epoch=-1)) # save startup weights
+callbacks_list = [ModelSave(filepath_epoch, mode="epoch", save_weights_only=True), ModelSave(filepath_batch, mode="batch", save_weights_only=True, period=10)]
 
 # train
 absolute_time = time.time()
