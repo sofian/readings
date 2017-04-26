@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Source: http://machinelearningmastery.com/text-generation-lstm-recurrent-neural-networks-python-keras/
 
 import argparse
