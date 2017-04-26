@@ -96,3 +96,10 @@ ENV/
 # Outputs
 *.txt
 
+# Image/Media
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.mov
+*.mp4
