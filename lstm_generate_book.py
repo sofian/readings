@@ -55,8 +55,8 @@ n_epochs = args.n_epochs
 # model files
 if os.path.isfile(args.model_file_list):
 	model_files = [line.rstrip('\n').strip() for line in open(args.model_file_list)]
-	if (n_epochs < len(model_files)):
-		print "Number of epochs {n_epochs} is smaller than number of files in list {n_files}: adjusting.".format(n_epochs=n_epochs, n_files=len(model_files))
+	if (n_epochs > len(model_files)):
+		print "Number of epochs {n_epochs} is larger than number of files in list {n_files}: adjusting.".format(n_epochs=n_epochs, n_files=len(model_files))
 		n_epochs = len(model_files)
 else:
 	model_files = [	"{prefix}{epoch:02d}.hdf5".format(prefix=args.model_file_list, epoch=e) for e in range(n_epochs) ]
