@@ -13,11 +13,14 @@ parser.add_argument("-i", "--initial-epoch", type=int, default=0, help="Epoch at
 parser.add_argument("-e", "--n-epochs", type=int, default=20, help="Number of epochs to train (total)")
 parser.add_argument("-lr", "--learning-rate", type=float, default=0.001, help="The learning rate")
 parser.add_argument("-p", "--batch-save-period", type=int, default=10, help="Period at which to save weights (ie. after every X batch)")
+parser.add_argument("-D", "--output-directory", type=str, default=".", help="The directory where to save models")
+parser.add_argument("-P", "--prefix", type=str, default="lstm-weights-", help="Prefix to use for saving files")
 parser.add_argument("-b", "--batch-size", type=int, default=128, help="The batch size")
 
 args = parser.parse_args()
 
 import numpy
+import os
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import Dropout
@@ -110,11 +113,13 @@ model.compile(loss='categorical_crossentropy', optimizer='adam')
 model.optimizer.lr.set_value(args.learning_rate) # Change learning rate
 
 # define the checkpoint
-filepath_prefix="lstm-weights-layers{n_layers}-nhu{n_hidden}-".format(n_hidden=args.n_hidden, n_layers=args.n_layers)
+if not os.path.exists(args.output_directory):
+	os.makedirs(args.output_directory)
+
+filepath_prefix="{dir}/{prefix}-layers{n_layers}-nhu{n_hidden}-".format(dir=args.output_directory,prefix=args.prefix,n_hidden=args.n_hidden, n_layers=args.n_layers)
 filepath_epoch=filepath_prefix+"e{epoch:02d}.hdf5"
 filepath_batch=filepath_prefix+"b{batch:08d}.hdf5"
 
-filepath="lstm-weights-layers{n_layers}-nhu{n_hidden}-{{epoch:02d}}.hdf5".format(n_hidden=args.n_hidden, n_layers=args.n_layers)
 if (args.initial_epoch == 0):
   model.save_weights(filepath_epoch.format(epoch=-1)) # save startup weights
 callbacks_list = [ModelSave(filepath_epoch, mode="epoch", save_weights_only=True), \
