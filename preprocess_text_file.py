@@ -34,3 +34,10 @@ raw_text = raw_text.replace("*", "")
 # Write to output.
 output_file = open(args.output_file, "w+")
 output_file.write(raw_text)
+
+# load ascii text and covert to lowercase
+raw_text = raw_text.lower()
+
+# create mapping of unique chars to integers
+chars = sorted(list(set(raw_text)))
+print chars
