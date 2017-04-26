@@ -22,6 +22,10 @@ raw_text = re.sub(r'\n\n+', '\r', raw_text)
 raw_text = raw_text.replace("\n", " ")
 raw_text = raw_text.replace("\r", "\n")
 
+# Fix multiple white spaces problems.
+raw_text = re.sub(r'\n +', '\n', raw_text)
+raw_text = re.sub(r' +', ' ', raw_text)
+
 # Replace special characters.
 raw_text = raw_text.replace("--", "—")
 raw_text = raw_text.replace("_", "")
