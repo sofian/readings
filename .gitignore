@@ -87,3 +87,12 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# Models
+*.hdf5
+*.hd5
+*.h5
+
+# Outputs
+*.txt
+
