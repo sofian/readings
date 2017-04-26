@@ -78,4 +78,13 @@ class TextComposite extends Text {
     return subTexts.size();
   }
 
+	String debug(int indentationLevel) {
+		String str = getIndented("(\n", indentationLevel);
+		for (Text t : subTexts) {
+      str += t.debug(indentationLevel+1);
+		}
+		str += getIndented(")\n", indentationLevel);
+		return str;
+	}
+
 }
