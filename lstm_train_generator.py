@@ -11,6 +11,7 @@ parser.add_argument("-s", "--sequence-length", type=int, default=100, help="Sequ
 parser.add_argument("-m", "--model-file", type=str, default="", help="Model file to load (in order to restart from a certain point)")
 parser.add_argument("-i", "--initial-epoch", type=int, default=0, help="Epoch at which to start training (useful for resuming previous training)")
 parser.add_argument("-e", "--n-epochs", type=int, default=20, help="Number of epochs to train (total)")
+parser.add_argument("-o", "--one-hot", action="store_true", help="Use one-hot encoding for input")
 parser.add_argument("-lr", "--learning-rate", type=float, default=0.001, help="The learning rate")
 parser.add_argument("-D", "--output-directory", type=str, default=".", help="The directory where to save models")
 parser.add_argument("-P", "--prefix", type=str, default="lstm-weights-", help="Prefix to use for saving files")
@@ -101,9 +102,14 @@ n_patterns = len(dataX)
 print "Total Patterns: ", n_patterns
 
 # reshape X to be [samples, time steps, features]
-X = numpy.reshape(dataX, (n_patterns, seq_length, 1))
-# normalize
-X = X / float(n_vocab)
+if args.one_hot:
+	dataX = np_utils.to_categorical(dataX, n_vocab)
+	X = numpy.reshape(dataX, (n_patterns, seq_length, n_vocab))
+else:
+	# normalize
+	X = numpy.reshape(dataX, (n_patterns, seq_length, 1))
+	X = X / float(n_vocab)
+
 # one hot encode the output variable
 y = np_utils.to_categorical(dataY)
 
