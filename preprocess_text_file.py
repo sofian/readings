@@ -28,6 +28,7 @@ raw_text = re.sub(r' +', ' ', raw_text)
 
 # Replace special characters.
 raw_text = raw_text.replace("--", "—")
+raw_text = raw_text.replace("—", "-")
 raw_text = raw_text.replace("_", "")
 raw_text = raw_text.replace("*", "")
 
