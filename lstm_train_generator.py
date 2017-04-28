@@ -11,7 +11,7 @@ parser.add_argument("-s", "--sequence-length", type=int, default=100, help="Sequ
 parser.add_argument("-m", "--model-file", type=str, default="", help="Model file to load (in order to restart from a certain point)")
 parser.add_argument("-i", "--initial-epoch", type=int, default=0, help="Epoch at which to start training (useful for resuming previous training)")
 parser.add_argument("-e", "--n-epochs", type=int, default=20, help="Number of epochs to train (total)")
-parser.add_argument("-o", "--one-hot", action="store_true", help="Use one-hot encoding for input")
+parser.add_argument("-E", "--embedding-length", type=int, default=0, help="Size of vector to use for first layer embedding (if 0 : don't use embedding)")
 parser.add_argument("-lr", "--learning-rate", type=float, default=0.001, help="The learning rate")
 parser.add_argument("-D", "--output-directory", type=str, default=".", help="The directory where to save models")
 parser.add_argument("-P", "--prefix", type=str, default="lstm-weights-", help="Prefix to use for saving files")
@@ -28,6 +28,7 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import Dropout
 from keras.layers import LSTM
+from keras.layers import Embedding
 from keras.callbacks import Callback
 from keras.utils import np_utils
 
@@ -101,22 +102,23 @@ for i in range(0, n_chars - seq_length, 1):
 n_patterns = len(dataX)
 print "Total Patterns: ", n_patterns
 
-# reshape X to be [samples, time steps, features]
-if args.one_hot:
-	dataX = np_utils.to_categorical(dataX, n_vocab)
-	X = numpy.reshape(dataX, (n_patterns, seq_length, n_vocab))
-else:
-	# normalize
-	X = numpy.reshape(dataX, (n_patterns, seq_length, 1))
-	X = X / float(n_vocab)
-
+# define the LSTM model
+model = Sequential()
 # one hot encode the output variable
 y = np_utils.to_categorical(dataY)
 
-# define the LSTM model
+if args.embedding_length <= 0:
+	# reshape X to be [samples, time steps, features] and normalize
+	X = numpy.reshape(dataX, (n_patterns, seq_length, 1)) / float(n_vocab)
+	# add first LSTM layer
+	model.add(LSTM(args.n_hidden, input_shape=(X.shape[1], X.shape[2]), return_sequences=(args.n_layers > 1)))
+else:
+	# reshape X to be [samples, time steps]
+	X = numpy.reshape(dataX, (n_patterns, seq_length))
+	# add embedded layer + LSTM layer
+	model.add(Embedding(n_vocab, args.embedding_length, input_length=seq_length))
+	model.add(LSTM(args.n_hidden, return_sequences=(args.n_layers > 1)))
 
-model = Sequential()
-model.add(LSTM(args.n_hidden, input_shape=(X.shape[1], X.shape[2]), return_sequences=(args.n_layers > 1)))
 model.add(Dropout(0.2))
 for l in range(1, args.n_layers):
   model.add(LSTM(args.n_hidden, return_sequences=(l < args.n_layers-1)))
