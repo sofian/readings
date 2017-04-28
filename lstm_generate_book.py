@@ -7,8 +7,9 @@ parser.add_argument("model_file_list", type=str, help="A file containing all the
 parser.add_argument("output_file", type=str, help="The output file")
 parser.add_argument("-n", "--n-hidden", type=int, default=256, help="Number of hidden units per layer")
 parser.add_argument("-l", "--n-layers", type=int, default=1, help="Number of layers")
-parser.add_argument("-e", "--n-epochs", type=int, default=20, help="Number of epochs")
 parser.add_argument("-s", "--sequence-length", type=int, default=100, help="Sequence length")
+parser.add_argument("-e", "--n-epochs", type=int, default=20, help="Number of epochs")
+parser.add_argument("-em", "--embedding-length", type=int, default=0, help="Size of vector to use for first layer embedding (if 0 : don't use embedding)")
 parser.add_argument("-S", "--sampling_mode", type=str, default="argmax", choices=["argmax", "softmax"], help="Sampling policy")
 parser.add_argument("-N", "--n-words", type=int, default=1000, help="Number of words to generate per epoch/chapter")
 parser.add_argument("-T", "--temperature", type=float, default=1, help="Temperature argument [0, +inf] (for softmax sampling) (higher: more uniform, lower: more greedy")
@@ -24,19 +25,30 @@ import os.path
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import Dropout
+from keras.layers import Embedding
 from keras.layers import LSTM
 from keras.callbacks import ModelCheckpoint
 from keras.utils import np_utils
 
 
-def create_model(args):
+def create_model():
+	global args, X, n_vocab, seq_length
+
 	# define the LSTM model
 	model = Sequential()
-	model.add(LSTM(args.n_hidden, input_shape=(X.shape[1], X.shape[2]), return_sequences=(args.n_layers > 1)))
+
+	if args.embedding_length <= 0:
+		# add first LSTM layer
+		model.add(LSTM(args.n_hidden, input_shape=(X.shape[1], X.shape[2]), return_sequences=(args.n_layers > 1)))
+	else:
+		# add embedded layer + LSTM layer
+		model.add(Embedding(n_vocab, args.embedding_length, input_length=seq_length))
+		model.add(LSTM(args.n_hidden, return_sequences=(args.n_layers > 1)))
+
 	model.add(Dropout(0.2))
 	for l in range(1, args.n_layers):
-		model.add(LSTM(args.n_hidden, return_sequences=(l < args.n_layers-1)))
-		model.add(Dropout(0.2))
+	  model.add(LSTM(args.n_hidden, return_sequences=(l < args.n_layers-1)))
+	  model.add(Dropout(0.2))
 	model.add(Dense(y.shape[1], activation='softmax'))
 	return model
 
@@ -44,7 +56,6 @@ def load_model(model, model_file):
 	# load the network weights
 	model.load_weights(model_file)
 	model.compile(loss='categorical_crossentropy', optimizer='adam')
-
 
 # load ascii text and covert to lowercase
 raw_text = open(args.text_file).read()
@@ -86,12 +97,16 @@ for i in range(0, n_chars - seq_length, 1):
 	dataY.append(char_to_int[seq_out])
 n_patterns = len(dataX)
 print "Total Patterns: ", n_patterns
-# reshape X to be [samples, time steps, features]
-X = numpy.reshape(dataX, (n_patterns, seq_length, 1))
-# normalize
-X = X / float(n_vocab)
+
 # one hot encode the output variable
 y = np_utils.to_categorical(dataY)
+
+if args.embedding_length <= 0:
+	# reshape X to be [samples, time steps, features] and normalize
+	X = numpy.reshape(dataX, (n_patterns, seq_length, 1)) / float(n_vocab)
+else:
+	# reshape X to be [samples, time steps]
+	X = numpy.reshape(dataX, (n_patterns, seq_length))
 
 n_words = args.n_words
 transition_factor = args.transition_factor
@@ -99,9 +114,9 @@ transition_n_words = int(n_words * transition_factor)
 transition_start_word = n_words - transition_n_words
 
 # Create model
-model = create_model(args)
+model = create_model()
 if transition_factor > 0:
-  model_next = create_model(args)
+  model_next = create_model()
 else:
   model_next = None
 
@@ -129,19 +144,21 @@ for e in range(n_epochs):
 	model.load_weights(model_file)
 	model.compile(loss='categorical_crossentropy', optimizer='adam')
 	#output_file.write("\n\nEPOCH {epoch}\n\n".format(epoch=e))
-	
+
 	if transition_factor > 0 and e < n_epochs-1:
 		model_next.load_weights(model_files[e+1])
 		model_next.compile(loss='categorical_crossentropy', optimizer='adam')
 
 	# generate characters
 	for i in range(n_words):
-		x = numpy.reshape(pattern, (1, len(pattern), 1))
-		x = x / float(n_vocab)
-		
+		if args.embedding_length <= 0:
+			x = numpy.reshape(pattern, (1, len(pattern), 1)) / float(n_vocab)
+		else:
+			x = numpy.reshape(pattern, (1, len(pattern)))
+
 		# run prediction of model
 		prediction = model.predict(x, verbose=0).squeeze()
-		
+
 		if transition_factor > 0 and i >= transition_start_word:
 		  prediction_next = model_next.predict(x, verbose=0).squeeze()
 		  mix_factor = (n_words - i) / float(transition_n_words)
@@ -173,13 +190,12 @@ for e in range(n_epochs):
 				max_indices_sum = numpy.sum(max_indices_weights)
 				max_indices_weights = [ prediction[m]/max_indices_sum for m in max_indices ]
 				index = numpy.asscalar(numpy.random.choice(numpy.array(max_indices), 1, p=numpy.array(max_indices_weights)))
-		
+
 		result = int_to_char[index]
 		seq_in = [int_to_char[value] for value in pattern]
 		output_file.write(result)
 		pattern.append(index)
 		pattern = pattern[1:len(pattern)]
 
-	output_file.flush()
-	
-
+print "Done"
+output_file.flush()
