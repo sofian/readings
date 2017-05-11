@@ -198,5 +198,5 @@ for e in range(n_epochs):
 		pattern.append(index)
 		pattern = pattern[1:len(pattern)]
 
-print "Done"
-output_file.flush()
+	print "Done"
+	output_file.flush()
