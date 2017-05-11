@@ -139,7 +139,7 @@ if not os.path.exists(args.output_directory):
 	os.makedirs(args.output_directory)
 
 filepath_prefix="{dir}/{prefix}-layers{n_layers}-nhu{n_hidden}-".format(dir=args.output_directory,prefix=args.prefix,n_hidden=args.n_hidden, n_layers=args.n_layers)
-filepath_epoch=filepath_prefix+"e{epoch:02d}.hdf5"
+filepath_epoch=filepath_prefix+"e{epoch:03d}.hdf5"
 filepath_batch=filepath_prefix+"b{batch:08d}.hdf5"
 
 if (args.initial_epoch == 0):
