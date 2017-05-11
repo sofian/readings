@@ -13,7 +13,7 @@ parser.add_argument("-i", "--initial-epoch", type=int, default=0, help="Epoch at
 parser.add_argument("-e", "--n-epochs", type=int, default=20, help="Number of epochs to train (total)")
 parser.add_argument("-em", "--embedding-length", type=int, default=0, help="Size of vector to use for first layer embedding (if 0 : don't use embedding)")
 parser.add_argument("-lr", "--learning-rate", type=float, default=0.001, help="The learning rate")
-parser.add_argument("-D", "--output-directory", type=str, default=".", help="The directory where to save models")
+parser.add_argument("-D", "--model-directory", type=str, default=".", help="The directory where to save models")
 parser.add_argument("-P", "--prefix", type=str, default="lstm-weights-", help="Prefix to use for saving files")
 parser.add_argument("-b", "--batch-size", type=int, default=128, help="The batch size")
 parser.add_argument("-p", "--batch-save-period", type=int, default=0, help="Period at which to save weights (ie. after every X batch, 0 = no batch save)")
@@ -135,10 +135,10 @@ model.compile(loss='categorical_crossentropy', optimizer='adam')
 model.optimizer.lr.set_value(args.learning_rate) # Change learning rate
 
 # define the checkpoint
-if not os.path.exists(args.output_directory):
-	os.makedirs(args.output_directory)
+if not os.path.exists(args.model_directory):
+	os.makedirs(args.model_directory)
 
-filepath_prefix="{dir}/{prefix}-layers{n_layers}-nhu{n_hidden}-".format(dir=args.output_directory,prefix=args.prefix,n_hidden=args.n_hidden, n_layers=args.n_layers)
+filepath_prefix="{dir}/{prefix}-layers{n_layers}-nhu{n_hidden}-".format(dir=args.model_directory,prefix=args.prefix,n_hidden=args.n_hidden, n_layers=args.n_layers)
 filepath_epoch=filepath_prefix+"e{epoch:03d}.hdf5"
 filepath_batch=filepath_prefix+"b{batch:08d}.hdf5"
 

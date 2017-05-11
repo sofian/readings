@@ -10,6 +10,7 @@ parser.add_argument("-l", "--n-layers", type=int, default=1, help="Number of lay
 parser.add_argument("-s", "--sequence-length", type=int, default=100, help="Sequence length")
 parser.add_argument("-e", "--n-epochs", type=int, default=20, help="Number of epochs")
 parser.add_argument("-em", "--embedding-length", type=int, default=0, help="Size of vector to use for first layer embedding (if 0 : don't use embedding)")
+parser.add_argument("-D", "--model-directory", type=str, default=".", help="The directory where models were saved")
 parser.add_argument("-S", "--sampling_mode", type=str, default="argmax", choices=["argmax", "softmax"], help="Sampling policy")
 parser.add_argument("-N", "--n-words", type=int, default=1000, help="Number of words to generate per epoch/chapter")
 parser.add_argument("-T", "--temperature", type=float, default=1, help="Temperature argument [0, +inf] (for softmax sampling) (higher: more uniform, lower: more greedy")
@@ -71,6 +72,7 @@ if os.path.isfile(args.model_file_list):
 		n_epochs = len(model_files)
 else:
 	model_files = [	"{prefix}{epoch:02d}.hdf5".format(prefix=args.model_file_list, epoch=e) for e in range(n_epochs) ]
+model_files = [ args.model_directory + "/" + f for f in model_files ]
 
 # output file
 output_file = open(args.output_file, "w+")
