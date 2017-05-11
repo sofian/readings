@@ -1,4 +1,6 @@
 # coding=utf-8
+# Note: first use http://www.utf8-chartable.de/unicode-utf8-table.pl?unicodeinhtml=hex
+#       to replace strange/unique letters by hand
 import argparse
 
 parser = argparse.ArgumentParser(description="Preprocesses text files to make them easier to train")
