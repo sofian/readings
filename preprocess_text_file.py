@@ -12,7 +12,10 @@ args = parser.parse_args()
 import re
 
 # Load file.
-raw_text = open(args.text_file).read()
+raw_text = open(args.text_file, "r").read()
+
+# load ascii text and covert to lowercase
+raw_text = raw_text.lower()
 
 # Replace * * * * * style separators.
 raw_text = raw_text.replace("*", "")
