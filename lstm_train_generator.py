@@ -17,8 +17,8 @@ parser.add_argument("-D", "--model-directory", type=str, default=".", help="The 
 parser.add_argument("-P", "--prefix", type=str, default="lstm-weights-", help="Prefix to use for saving files")
 parser.add_argument("-b", "--batch-size", type=int, default=128, help="The batch size")
 parser.add_argument("-p", "--batch-save-period", type=int, default=0, help="Period at which to save weights (ie. after every X batch, 0 = no batch save)")
-parser.add_argument("-fb", "--first-epoch-batch-size", type=int, default=128, help="The batch size during the first epoch")
-parser.add_argument("-fp", "--first-epoch-batch-save-period-params", type=str, default=None, help="A formatted string describing the evolution of periods between savings during the first epoch")
+
+parser.add_argument("-fp", "--first-epoch-params", type=str, default=None, help="A formatted string describing the evolution of batch size and save period during the first epoch")
 
 args = parser.parse_args()
 
@@ -35,12 +35,11 @@ from keras.utils import np_utils
 import time
 
 class ModelSave(Callback):
-	def __init__(self, filepath, mode="epoch", save_weights_only=False, period=1, period_progression=None):
+	def __init__(self, filepath, mode="epoch", save_weights_only=False, period=1):
 		super(ModelSave, self).__init__()
 		self.filepath = filepath
 		self.save_weights_only = save_weights_only
 		self.period = period
-		self.period_progression = period_progression
 		self.steps_since_last_save = 0
 		if (mode == "epoch"):
 			self.process_epoch = True
@@ -49,20 +48,9 @@ class ModelSave(Callback):
 		else:
 			raise ValueError("Option 'mode' must either be set to 'epoch' or 'batch'.")
 
-	def get_period(self, step):
-		if self.period_progression == None:
-			return self.period
-		else:
-			# retrieve period in array of tuples
-			for x in self.period_progression:
-				if step <= x[0]:
-					return x[1]
-			return self.period # default
-
 	def on_step_end(self, filepath, step, logs={}):
 		self.steps_since_last_save += 1
-		period = self.get_period(step)
-		if period > 0 and self.steps_since_last_save >= period:
+		if self.period > 0 and self.steps_since_last_save >= self.period:
 			self.steps_since_last_save = 0
 			if self.save_weights_only:
 				self.model.save_weights(filepath, overwrite=True)
@@ -149,22 +137,23 @@ epoch_model_save = ModelSave(filepath_epoch, mode="epoch", save_weights_only=Tru
 batch_model_save = ModelSave(filepath_batch, mode="batch", save_weights_only=True, period=args.batch_save_period)
 
 # build first epoch model save
-params = args.first_epoch_batch_save_period_params
-if params != None:
-	print "Using specific params for first epoch"
+# eg. "10:1:1,20:4:2,100:32:10,-1:128:100"
+# save 10 with batch size 1 every 1
+# then save 20 with batch size 4 every 2
+# then save 100 with batch size 32 every 10
+# then save the rest with batch size 128 every 100
+def parse_params(params):
+	first_epoch_progression = []
 	first_epoch_args = params.split(',')
-	first_epoch_batch_save_period = int(first_epoch_args[-1])
-	first_epoch_batch_period_progression = []
-	for i in range(len(first_epoch_args)-1):
-		x = first_epoch_args[i].split(':')
-		first_epoch_batch_period_progression.append( (int(x[0]), int(x[1])) )
-	print "Save period: " + str(first_epoch_batch_save_period)
-	print "Period progression scheme: " + str(first_epoch_batch_period_progression)
+	for arg in first_epoch_args:
+		first_epoch_progression.append( [ int(x) for x in arg.split(':') ] )
+	return first_epoch_progression
+
+# Parse first period progression specifics.
+if args.first_epoch_params != None:
+	first_epoch_progression = parse_params(args.first_epoch_params)
 else:
-	first_epoch_batch_save_period = args.batch_save_period
-	first_epoch_batch_period_progression = None
-first_epoch_batch_model_save = ModelSave(filepath_batch, mode="batch", save_weights_only=True, \
-																				 period=first_epoch_batch_save_period, period_progression=first_epoch_batch_period_progression)
+	first_epoch_progression = None
 
 n_epochs = args.n_epochs
 n_epochs_remaining = n_epochs
@@ -172,12 +161,45 @@ n_epochs_remaining = n_epochs
 # train
 absolute_time = time.time()
 cpu_time = time.clock()
+
 # train first epoch separately
 if args.initial_epoch == 0:
-	model.fit(X, y, nb_epoch=1, batch_size=args.first_epoch_batch_size, callbacks=[epoch_model_save, first_epoch_batch_model_save])
+	if first_epoch_progression == None:
+		model.fit(X, y, nb_epoch=1, batch_size=args.batch_size, callbacks=[epoch_model_save, batch_model_save])
+	else:
+		print "Special training for first epoch"
+		# simulate sub-epochs
+		i = 0
+		first_epoch_completed = False
+		for k in range(len(first_epoch_progression)):
+			param = first_epoch_progression[k]
+			n_saves           = param[0]
+			batch_size        = param[1]
+			batch_save_period = param[2]
+			print "Step #{step:02d} n_saves={n_saves} batch_size={batch} batch_save_period={period}".format(step=k, n_saves=n_saves, batch=batch_size, period=batch_save_period)
+			if (n_saves == -1):
+				# complete training over remaining items
+				first_epoch_batch_model_save = ModelSave(filepath_batch, mode="batch", save_weights_only=True, period=batch_save_period)
+				first_epoch_completed = True;
+				model.fit(X[i:], y[i:], nb_epoch=1, batch_size=batch_size, callbacks=[epoch_model_save, first_epoch_batch_model_save])
+			else:
+				for b in range(n_saves):
+					for p in range(batch_save_period):
+						j = i + batch_size
+						model.train_on_batch(X[i:j], y[i:j])
+						i = j
+					filepath_batch=filepath_prefix+"bs{size:03d}-s{step:02d}b{batch:05d}.hdf5".format(size=batch_size,step=k,batch=b*batch_save_period)
+					print "Saving to " + filepath_batch
+					model.save_weights(filepath_batch, overwrite=True)
+
+		# complete training over remaining items (unless already completed)
+		if not first_epoch_completed:
+			model.fit(X[i:], y[i:], nb_epoch=1, batch_size=args.batch_size, callbacks=[epoch_model_save, batch_model_save])
 	n_epochs_remaining -= 1
+
 # train other epochs
 model.fit(X, y, nb_epoch=n_epochs_remaining, batch_size=args.batch_size, callbacks=[epoch_model_save, batch_model_save], initial_epoch=args.initial_epoch)
+
 absolute_time = time.time()  - absolute_time
 cpu_time      = time.clock() - cpu_time
 n_epochs = args.n_epochs - args.initial_epoch
