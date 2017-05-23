@@ -27,15 +27,20 @@ raw_text = re.sub(r'\n\n+', '\r', raw_text)
 raw_text = raw_text.replace("\n", " ")
 raw_text = raw_text.replace("\r", "\n")
 
+# Replace special/rare characters.
+raw_text = raw_text.replace("--", "-")
+raw_text = raw_text.replace("—",  "-")
+raw_text = raw_text.replace("(", "-")
+raw_text = raw_text.replace(")", "-")
+raw_text = re.sub(r'\d', '', raw_text)
+
+# Remove rare characters.
+raw_text = raw_text.replace("_", "") # usually signifies italics
+raw_text = raw_text.replace("*", "")
+
 # Fix multiple white spaces problems.
 raw_text = re.sub(r'\n +', '\n', raw_text)
 raw_text = re.sub(r' +', ' ', raw_text)
-
-# Replace special characters.
-raw_text = raw_text.replace("--", "—")
-raw_text = raw_text.replace("—", "-")
-raw_text = raw_text.replace("_", "")
-raw_text = raw_text.replace("*", "")
 
 # Write to output.
 output_file = open(args.output_file, "w+")
@@ -46,4 +51,6 @@ raw_text = raw_text.lower()
 
 # create mapping of unique chars to integers
 chars = sorted(list(set(raw_text)))
-print chars
+
+for c in chars:
+  print str(c) + " : " + str(raw_text.count(c))
