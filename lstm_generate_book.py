@@ -137,7 +137,7 @@ n_best = args.n_best
 for e in range(n_epochs):
 	if (args.temperature_end > 0):
 		# linear interpolation
-		temperature = args.temperature + (float(e)/(args.n_epochs-1)) * (args.temperature_end - args.temperature)
+		temperature = args.temperature + (float(e)/(n_epochs-1)) * (args.temperature_end - args.temperature)
 
 	model_file = model_files[e]
 	print "Generating epoch/step # {epoch} (temperature={temp}) using file {filename}".format(epoch=e,temp=temperature,filename=model_file)
