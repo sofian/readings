@@ -51,8 +51,6 @@ output_text = re.sub(r'  ', ur' '+unichr(160), output_text)
 import codecs
 codecs.open(args.output_file, "w+", "utf-8").write(output_text)
 
-print text[start_pos:end_pos]
-
 print "First-last position: " + str(start_pos) + "-" + str(end_pos)
 print "First character: [" + text[0] + "]"
 print "Percentage removed (first epoch): " + str(round(start_pos / float(args.n_words) * 100.0)) + "%"
