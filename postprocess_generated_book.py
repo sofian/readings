@@ -45,6 +45,9 @@ start_pos = end_pos - length
 # Replace dumb quotes to smart quotes
 output_text = dumb_to_smart_quotes(text[start_pos:end_pos])
 
+# Replace double-spaces with one space + one non-breaking space
+output_text = re.sub(r'  ', ur' '+unichr(160), output_text)
+
 import codecs
 codecs.open(args.output_file, "w+", "utf-8").write(output_text)
 
