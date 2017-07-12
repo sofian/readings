@@ -39,7 +39,20 @@ text = open(args.text_file, "r+").read()
 length = len(open(args.data_file, "r+").read())
 
 # Find the position of the end dot (.) and re-build the text.
-end_pos = text.rfind('.')+1
+bad_endings = [ "mr", "mrs", "ms", "dr" ]
+ending_ok = False
+end_pos = len(text)
+while not ending_ok:
+    end_pos = text.rfind('.', 0, end_pos)+1
+    end_text = text[0:end_pos]
+    ending_ok = True;
+    for ending in bad_endings:
+        if (end_text.endswith(" " + ending + ".")):
+            print "Found bad ending: " + ending
+            ending_ok = False
+            end_pos -= 1
+            break
+
 start_pos = end_pos - length
 
 # Replace dumb quotes to smart quotes
