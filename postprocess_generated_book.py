@@ -38,20 +38,33 @@ def dumb_to_smart_quotes(string):
 text = open(args.text_file, "r+").read()
 length = len(open(args.data_file, "r+").read())
 
-# Find the position of the end dot (.) and re-build the text.
-bad_endings = [ "mr", "mrs", "ms", "dr" ]
-ending_ok = False
-end_pos = len(text)
-while not ending_ok:
-    end_pos = text.rfind('.', 0, end_pos)+1
-    end_text = text[0:end_pos]
-    ending_ok = True;
-    for ending in bad_endings:
-        if (end_text.endswith(" " + ending + ".")):
-            print "Found bad ending: " + ending
-            ending_ok = False
-            end_pos -= 1
-            break
+def find_end_position(char, text):
+    # Prevent finding position at specific abbreviations.
+    bad_endings = [ "mr", "mrs", "ms", "dr" ]
+    ending_ok = False
+    end_pos = len(text)
+    while not ending_ok:
+        end_pos = text.rfind(char, 0, end_pos)+1
+        end_text = text[0:end_pos]
+        ending_ok = True;
+        for ending in bad_endings:
+            if (end_text.endswith(" " + ending + ".")):
+                print "Found bad ending: " + ending
+                ending_ok = False
+                end_pos -= 1
+                break
+
+    # If next char is ending quote, stop there instead.
+    if (end_pos != len(text)-1):
+        if (text[end_pos] == "\"" or text[end_pos] == "'"):
+             end_pos += 1
+    
+    return end_pos
+
+# Find end position and re-build the text.
+end_pos =              find_end_position(".", text)
+end_pos = max(end_pos, find_end_position("?", text))
+end_pos = max(end_pos, find_end_position("!", text))
 
 start_pos = end_pos - length
 
