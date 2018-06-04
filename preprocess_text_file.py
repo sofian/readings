@@ -12,7 +12,8 @@ args = parser.parse_args()
 import re
 
 # Load file.
-raw_text = open(args.text_file, "r").read()
+import io
+raw_text = io.open(args.text_file, "r").read()
 
 # load ascii text and covert to lowercase
 raw_text = raw_text.lower()
@@ -28,15 +29,23 @@ raw_text = raw_text.replace("\n", " ")
 raw_text = raw_text.replace("\r", "\n")
 
 # Replace special/rare characters.
-raw_text = raw_text.replace("--", "-")
-raw_text = raw_text.replace("—",  "-")
-raw_text = raw_text.replace("(", "-")
-raw_text = raw_text.replace(")", "-")
-raw_text = re.sub(r'\d', '', raw_text)
+#raw_text = raw_text.replace("--", "-")
+raw_text = raw_text.replace(u"—",  "-")
+raw_text = raw_text.replace("_",  "")
+raw_text = raw_text.replace("(", "")
+raw_text = raw_text.replace(")", "")
+raw_text = re.sub(r'\d', '', raw_text) # remove numbers
 
 # Remove rare characters.
-raw_text = raw_text.replace("_", "") # usually signifies italics
+#raw_text = raw_text.replace("_", "") # usually signifies italics
 raw_text = raw_text.replace("*", "")
+raw_text = raw_text.replace(u"“", "\"")
+raw_text = raw_text.replace(u"”", "\"")
+
+raw_text = raw_text.replace(u"‘", "'")
+raw_text = raw_text.replace(u"’", "'")
+
+#raw_text = raw_text.replace("”", "")
 
 # Fix multiple white spaces problems.
 raw_text = re.sub(r'\n +', '\n', raw_text)
