@@ -12,7 +12,7 @@ parser.add_argument("-m", "--model-file", type=str, default="", help="Model file
 parser.add_argument("-i", "--initial-epoch", type=int, default=0, help="Epoch at which to start training (useful for resuming previous training)")
 parser.add_argument("-e", "--n-epochs", type=int, default=20, help="Number of epochs to train (total)")
 parser.add_argument("-em", "--embedding-length", type=int, default=0, help="Size of vector to use for first layer embedding (if 0 : don't use embedding)")
-parser.add_argument("-lr", "--learning-rate", type=float, default=0.001, help="The learning rate")
+#parser.add_argument("-lr", "--learning-rate", type=float, default=0.001, help="The learning rate")
 parser.add_argument("-D", "--model-directory", type=str, default=".", help="The directory where to save models")
 parser.add_argument("-P", "--prefix", type=str, default="lstm-weights-", help="Prefix to use for saving files")
 parser.add_argument("-b", "--batch-size", type=int, default=128, help="The batch size")
@@ -120,7 +120,7 @@ if (args.model_file):
   model.load_weights(args.model_file)
 
 model.compile(loss='categorical_crossentropy', optimizer='adam')
-model.optimizer.lr.set_value(args.learning_rate) # Change learning rate
+#model.optimizer.lr.set_value(args.learning_rate) # Change learning rate
 
 # define the checkpoint
 if not os.path.exists(args.model_directory):
