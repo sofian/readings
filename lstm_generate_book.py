@@ -17,6 +17,7 @@ parser.add_argument("-T", "--temperature", type=float, default=1, help="Temperat
 parser.add_argument("-E", "--temperature-end", type=float, default=-1, help="Temperature end value (if <= 0 : don't change)")
 parser.add_argument("-b", "--n-best", type=int, default=0, help="Number of best choices from which to pick (to avoid too unlikely outcomes)")
 parser.add_argument("-t", "--transition-factor", type=float, default=0, help="Portion of words in each step that will smoothly transition from one model to the next (in [0, 1])")
+parser.add_argument("-p", "--seed", type=str, default=None, help="The seed used to generate the text (default will use end of training text)")
 
 args = parser.parse_args()
 
@@ -99,6 +100,10 @@ for i in range(0, n_chars - seq_length, 1):
 n_patterns = len(dataX)
 print("Total Patterns: ", n_patterns)
 
+
+dataX = numpy.array(dataX)
+dataY = numpy.array(dataY)
+
 # one hot encode the output variable
 y = np_utils.to_categorical(dataY)
 
@@ -124,7 +129,11 @@ else:
 print(model.summary())
 
 # pick end of text as seed
-pattern = dataX[-1]
+if (args.seed == None):
+	pattern = dataX[-1]
+# of use predefined seed
+else:
+	pattern = [char_to_int[char] for char in args.seed[-seq_length:]]
 
 print("Seed:")
 print("\"", ''.join([int_to_char[value] for value in pattern]), "\"")
@@ -195,7 +204,8 @@ for e in range(n_epochs):
 		result = int_to_char[index]
 		seq_in = [int_to_char[value] for value in pattern]
 		output_file.write(result)
-		pattern.append(index)
+		pattern = numpy.append(pattern, index)
+#		pattern.append(index)
 		pattern = pattern[1:len(pattern)]
 
 	print("Done")
