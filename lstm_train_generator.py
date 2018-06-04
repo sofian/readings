@@ -180,7 +180,7 @@ if args.initial_epoch == 0:
 			if (n_saves == -1):
 				# complete training over remaining items
 				first_epoch_batch_model_save = ModelSave(filepath_batch, mode="batch", save_weights_only=True, period=batch_save_period)
-				first_epoch_completed = True;
+				first_epoch_completed = True
 				model.fit(X[i:], y[i:], nb_epoch=1, batch_size=batch_size, callbacks=[epoch_model_save, first_epoch_batch_model_save])
 			else:
 				for b in range(n_saves):
