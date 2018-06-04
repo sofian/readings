@@ -95,6 +95,9 @@ model = Sequential()
 # one hot encode the output variable
 y = np_utils.to_categorical(dataY)
 
+dataX = numpy.array(dataX)
+dataY = numpy.array(dataY)
+
 if args.embedding_length <= 0:
 	# reshape X to be [samples, time steps, features] and normalize
 	X = numpy.reshape(dataX, (n_patterns, seq_length, 1)) / float(n_vocab)
