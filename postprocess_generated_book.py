@@ -22,17 +22,17 @@ def dumb_to_smart_quotes(string):
 
     # Find dumb double quotes coming directly after letters or punctuation,
     # and replace them with right double quotes.
-    string = re.sub(r'([a-zA-Z0-9.,?!;:\'\"])"', ur'\1”', string)
+    string = re.sub(r'([a-zA-Z0-9.,?!;:\'\"])"', r'\1”', string)
     # Find any remaining dumb double quotes and replace them with
     # left double quotes.
-    string = string.replace('"', u'“')
+    string = string.replace('"', '“')
     # Reverse: Find any SMART quotes that have been (mistakenly) placed around HTML
     # attributes (following =) and replace them with dumb quotes.
-    string = re.sub(ur'=“(.*?)”', ur'="\1"', string)
+    string = re.sub(r'=“(.*?)”', r'="\1"', string)
     # Follow the same process with dumb/smart single quotes
-    string = re.sub(r"([a-zA-Z0-9.,?!;:\"\'])'", ur'\1’', string)
-    string = string.replace("'", u'‘')
-    string = re.sub(ur'=‘(.*?)’', r"='\1'", string)
+    string = re.sub(r"([a-zA-Z0-9.,?!;:\"\'])'", r'\1’', string)
+    string = string.replace("'", '‘')
+    string = re.sub(r'=‘(.*?)’', r"='\1'", string)
     return string
 
 text = open(args.text_file, "r+").read()
@@ -49,7 +49,7 @@ def find_end_position(char, text):
         ending_ok = True;
         for ending in bad_endings:
             if (end_text.endswith(" " + ending + ".")):
-                print "Found bad ending: " + ending
+                print("Found bad ending: " + ending)
                 ending_ok = False
                 end_pos -= 1
                 break
@@ -72,12 +72,12 @@ start_pos = end_pos - length
 output_text = dumb_to_smart_quotes(text[start_pos:end_pos])
 
 # Replace double-spaces with one space + one non-breaking space
-output_text = re.sub(r'  ', ur' '+unichr(160), output_text)
+output_text = re.sub(r'  ', r' '+chr(160), output_text)
 
 import codecs
 codecs.open(args.output_file, "w+", "utf-8").write(output_text)
 
-print "First-last position: " + str(start_pos) + "-" + str(end_pos)
-print "First character: [" + text[0] + "]"
-print "Percentage removed (first epoch): " + str(round(start_pos / float(args.n_words) * 100.0)) + "%"
-print "Percentage removed (last epoch): " + str(round((len(text)-end_pos) / float(args.n_words) * 100.0)) + "%"
+print("First-last position: " + str(start_pos) + "-" + str(end_pos))
+print("First character: [" + text[0] + "]")
+print("Percentage removed (first epoch): " + str(round(start_pos / float(args.n_words) * 100.0)) + "%")
+print("Percentage removed (last epoch): " + str(round((len(text)-end_pos) / float(args.n_words) * 100.0)) + "%")
